@@ -11,7 +11,10 @@ class MapCity:
         self.size_Name = size_Name 
         self.Points = self.createPoints()
         self.Names = self.createNames()
-        self.Map = self.fillMap() 
+        self.Map_villages = self.fillMap() 
+        self.Villages = self.build_villages_list()
+        self.Roads = None
+        self.Map_roads = None
 
 
     def createNames(self):
@@ -44,8 +47,81 @@ class MapCity:
 
         return myMap
 
-    def show_Map_cities(self,figsize_=(15,15)):
+    def show_Map_villages(self,figsize_=(15,15)):
         fig = plt.figure(figsize = figsize_)
-        plt.imshow(self.Map)
-        plt.show()
+        plt.imshow(self.Map_villages)
+        plt.show()        
+
+    def build_villages_list(self):
+        PointDictionary = []
+        Names_letter = "ABCDEFGHIJKLMNOP"    # 16 VALORES
+        Names_number = "012345"               # 6 X 16 
+
+        for i in range (self.numPoints):
+            A = {'Name': Names_letter[i%16]+Names_number[int(i/16)], 'PosY': self.Points[i,0], 'PosX': self.Points[i,1],'Paths':[]}
+            PointDictionary.append(A)
+
+        return PointDictionary
+
+    def euclidianDist2D(self, x1,x2,y1,y2):
+        import math
+        return math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
+
+    def create_roads(self, Prob):  # probability of road between two villages is in funtion of the distance
+     # being accepted if rd.random() < (1 - dEuclidiana/(Prob*size_window_x))
+        import random as rd
+        point_dic_X = self.Villages.copy()
+        point_dic_X.sort(key=lambda d: d['PosX'])
+        Paths = [] 
+
+        def distRoads(val):
+            noise = rd.random()/2 + 0.01                 # valores obtenidos (0.01 hasta 0.51)
+            road = (1+noise) * val      # un road estará entre 101 y 151 % de su distancia euclidiana
+            return int(road)
+
+
+        for i in range(self.numPoints):
+            for j in range(i+1,self.numPoints):
+                dEuclidiana = self.euclidianDist2D(point_dic_X[i]['PosX'],point_dic_X[j]['PosX'],point_dic_X[i]['PosY'],point_dic_X[j]['PosY'])
+                if (rd.random() < (1 - dEuclidiana/(Prob*1.4*self.size_Window_X))):   # Aprox 1.4*size_window_x es la maxima dist posible
+                    Path_aux = {'Names': [point_dic_X[i]['Name'],point_dic_X[j]['Name']], 'Dist': distRoads(dEuclidiana)}
+                    Paths.append(Path_aux)
+        
+        self.Roads = Paths
+    
+    def create_Map_roads(self, figsize_=(15,15)):
+
+        def printOnePath(myMap, Path, PointDictionary):
+            P_in =  list(filter(lambda item: item['Name'] == Path['Names'][0], PointDictionary))
+            P_out =  list(filter(lambda item: item['Name'] == Path['Names'][1], PointDictionary))
+
+            distE = self.euclidianDist2D(P_in[0]['PosX'],P_out[0]['PosX'],P_in[0]['PosY'],P_out[0]['PosY'])             
+            NPseparation = int(distE/20)+1   # Obtener número de puntos a partir de la distancia euclidiana entre los dos puntos
+            dY = int((P_out[0]['PosY'] - P_in[0]['PosY'])/NPseparation)
+            dX = int((P_out[0]['PosX'] - P_in[0]['PosX'])/NPseparation)
+
+            for i in range(NPseparation+1):
+                en_Y = P_in[0]['PosY']+i*dY
+                en_X = P_in[0]['PosX']+i*dX
+                myMap[en_Y-2:en_Y+2,en_X-2:en_X+2,:] = 0
+
+            return myMap
+
+        def printPaths(my_map, myPaths, PointDictionary):
+            for myPath in myPaths:
+                my_map = printOnePath(my_map, myPath, PointDictionary)
+
+            return my_map
+
+        my_map = self.Map_villages.copy()
+        self.Map_roads = printPaths(my_map, self.Roads, self.Villages)  
+
+    def show_Map_roads(self,figsize_=(15,15)):
+        self.create_Map_roads()
+        fig = plt.figure(figsize = figsize_)
+        plt.imshow(self.Map_roads)
+        plt.show()      
+
+
+
 
