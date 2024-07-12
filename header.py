@@ -121,7 +121,33 @@ class MapCity:
         fig = plt.figure(figsize = figsize_)
         plt.imshow(self.Map_roads)
         plt.show()      
+    
+    def find_Conections_to_Village(self, PointName):
+        ''' Takes an argument: a Village name
+        return connections if they exist '''
+        names_villages =  list(map(lambda item: item['Name'], self.Villages))
+        
+        if PointName in names_villages:
+
+            P_conections =  list(filter(lambda item: item['Names'][0] == PointName or item['Names'][1] == PointName, self.Roads))
+
+            citiesArrivals = []
+
+            for conection in P_conections:
+                for k in range(2):
+                    if conection['Names'][k] != PointName:
+                        citiesArrivals.append(conection['Names'][k])
+
+            return citiesArrivals
+
+        else:
+            print(names_villages)
+            return f"Village {PointName} does not exist in the map"
 
 
+class finder_algorithms:
+    def __init__(self):
+        pass
+    
 
 

@@ -10,3 +10,4 @@ Guanajuato.create_roads(0.9)
 Guanajuato.show_Map_roads()
 
 
+print(Guanajuato.find_Conections_to_Village('H0'))
