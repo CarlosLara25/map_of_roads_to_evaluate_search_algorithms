@@ -141,13 +141,98 @@ class MapCity:
             return citiesArrivals
 
         else:
-            print(names_villages)
             return f"Village {PointName} does not exist in the map"
 
+    def get_dataframe_roads(self):
+        import pandas as pd
 
-class finder_algorithms:
-    def __init__(self):
-        pass
+        df_roads = pd.DataFrame([key['Names'][0]    for key in self.Roads], columns=['City depture'])
+        df_roads['City arrival'] = [key['Names'][1]    for key in self.Roads]
+        df_roads['Distance'] = [key['Dist']    for key in self.Roads]
+
+        return df_roads
+ 
+
+class Nodo:
+    def __init__(self, x):                                  # Inicializar nodo con su data
+        self.Name = x                                 # Padre del nodo inicalizado en NONE
+        self.childs = []                              # 4 Posibles hijos inicializados en None correspondientes a su action                                            # Dato contenido
+        self.actions = []                                    # Actions desde la raiz
+        self.cost = 0
+        self.cost_Astar = 0
+
+class search_Paths:
+    def __init__(self, Map, algorithm = 'Wide'):
+        self.Map = Map
+        self.algorithm = algorithm
+
+    def totalCostPath(Paths, Point_out, path_solution):
+
+        total_dist = 0
+
+        if len(path_solution) != None:
+            aux_path =  list(filter(lambda item: item['Names'] == [Point_out, path_solution[0]] or item['Names'] == [path_solution[0], Point_out], Paths))
+            total_dist += aux_path[0]['Dist']
+
+            for i in range(len(path_solution) - 1):
+            aux_path =  list(filter(lambda item: item['Names'] == [path_solution[i], path_solution[i+1]] or item['Names'] == [path_solution[i+1], path_solution[i]], Paths))
+            total_dist += aux_path[0]['Dist']
+
+            return total_dist
+
+        return 0
+
+    def checkSolution(PointName, cityName):
+        if PointName.Name == cityName:
+            return True
+        else:
+            return False
+
+    def createTree(curr_nodo,  myPaths):                             # Recibe un nodo y lo extiende con sus posibles acciones
+
+        childsNames = findPathsFromPoint(curr_nodo.Name, myPaths)
+
+        for cN in childsNames:
+            aux_Node = Nodo(cN)
+            aux_Node.actions = curr_nodo.actions + [cN]
+            curr_nodo.childs.append(aux_Node)
+
+        return  curr_nodo
+
+    def solutionPaths_wide(Paths, solutionCity, currentCity):
+
+        cityNode = Nodo(currentCity)                 # inicializar la pila de nodos a evaluar
+        list_node = [cityNode]                       # Inicializar lista de estado evaluados
+        evaluated_states = []
+        result = None
+
+        while True:
+            if len(list_node)==0:                           # Verificar si la lista está vacía entonces no hay solución
+                break
+            #print(evaluated_states)
+
+            curr_node = list_node.pop(0)                 # Saca el primer elemento de la lista
+            if curr_node.Name in evaluated_states:            # Si el elemento ya fue evaludado continúa con el que sigue
+             #     print(f'el nodo {curr_node.Name} ya ha sido evaluado')
+                  continue
+
+           # print(f'Nodo evaluado {curr_node.Name}')
+            if checkSolution(curr_node, solutionCity):     # Evaluar el estado   preguntando si ya es la solucion
+                  result = curr_node.actions
+                  break
+
+            evaluated_states.append(curr_node.Name)            # Agrega el nodo a la lista de evaluados
+            curr_node = createTree(curr_node, Paths)           # expande el nodo
+            for child in curr_node.childs:
+                list_node.append(child)
+        print(len(evaluated_states))
+        return result
+
+
+
+
+
+
     
 
 
