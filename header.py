@@ -162,35 +162,42 @@ class Nodo:
         self.cost_Astar = 0
 
 class search_Paths:
-    def __init__(self, Map, algorithm = 'Wide'):
+    def __init__(self, Map,  goal_Village, Initial_Village = 'A0', algorithm = 'Wide'):
         self.Map = Map
+        self.Roads = Map.Roads
+        self.Initial_Village = Initial_Village
+        self.goal_Village = goal_Village
         self.algorithm = algorithm
+        self.solution = self.algorithm_selection()
 
-    def totalCostPath(Paths, Point_out, path_solution):
+    def algorithm_selection(self):
+        if self.algorithm == ('Wide' or 'wide'):
+            return self.solutionPaths_wide()
 
+    def totalCostPath(self, path_solution):
         total_dist = 0
 
         if len(path_solution) != None:
-            aux_path =  list(filter(lambda item: item['Names'] == [Point_out, path_solution[0]] or item['Names'] == [path_solution[0], Point_out], Paths))
+            aux_path =  list(filter(lambda item: item['Names'] == [self.goal_Village, path_solution[0]] or item['Names'] == [path_solution[0], self.goal_Village], self.Roads))
             total_dist += aux_path[0]['Dist']
 
             for i in range(len(path_solution) - 1):
-            aux_path =  list(filter(lambda item: item['Names'] == [path_solution[i], path_solution[i+1]] or item['Names'] == [path_solution[i+1], path_solution[i]], Paths))
-            total_dist += aux_path[0]['Dist']
+                aux_path =  list(filter(lambda item: item['Names'] == [path_solution[i], path_solution[i+1]] or item['Names'] == [path_solution[i+1], path_solution[i]], self.Roads))
+                total_dist += aux_path[0]['Dist']
 
             return total_dist
 
         return 0
 
-    def checkSolution(PointName, cityName):
-        if PointName.Name == cityName:
+    def checkSolution(self, PointName):
+        if PointName.Name == self.goal_Village:
             return True
         else:
             return False
 
-    def createTree(curr_nodo,  myPaths):                             # Recibe un nodo y lo extiende con sus posibles acciones
+    def createTree(self, curr_nodo):                             # Recibe un nodo y lo extiende con sus posibles acciones
 
-        childsNames = findPathsFromPoint(curr_nodo.Name, myPaths)
+        childsNames = self.Map.find_Conections_to_Village(curr_nodo.Name)
 
         for cN in childsNames:
             aux_Node = Nodo(cN)
@@ -199,9 +206,9 @@ class search_Paths:
 
         return  curr_nodo
 
-    def solutionPaths_wide(Paths, solutionCity, currentCity):
+    def solutionPaths_wide(self):
 
-        cityNode = Nodo(currentCity)                 # inicializar la pila de nodos a evaluar
+        cityNode = Nodo(self.Initial_Village)                 # inicializar la pila de nodos a evaluar
         list_node = [cityNode]                       # Inicializar lista de estado evaluados
         evaluated_states = []
         result = None
@@ -217,16 +224,19 @@ class search_Paths:
                   continue
 
            # print(f'Nodo evaluado {curr_node.Name}')
-            if checkSolution(curr_node, solutionCity):     # Evaluar el estado   preguntando si ya es la solucion
+            if self.checkSolution(curr_node):     # Evaluar el estado   preguntando si ya es la solucion
                   result = curr_node.actions
                   break
 
             evaluated_states.append(curr_node.Name)            # Agrega el nodo a la lista de evaluados
-            curr_node = createTree(curr_node, Paths)           # expande el nodo
+            curr_node = self.createTree(curr_node)           # expande el nodo
             for child in curr_node.childs:
                 list_node.append(child)
-        print(len(evaluated_states))
+        print(f'Have been evaluated {len(evaluated_states)} states')
         return result
+
+    def show_solution(self):
+        print(self.solution)
 
 
 

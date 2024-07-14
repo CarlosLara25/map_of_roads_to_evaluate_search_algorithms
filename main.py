@@ -1,4 +1,4 @@
-from header import MapCity
+from header import MapCity, search_Paths
 
 Num_villages = 10
 
@@ -9,5 +9,7 @@ Guanajuato.show_Map_villages()
 Guanajuato.create_roads(0.9)
 Guanajuato.show_Map_roads()
 
+Solution = search_Paths(Guanajuato,'B0','D0')
 
-print(Guanajuato.find_Conections_to_Village('H0'))
+Solution.show_solution()
+
