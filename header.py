@@ -72,6 +72,9 @@ class MapCity:
 
     def create_roads(self, Prob):  # probability of road between two villages is in funtion of the distance
      # being accepted if rd.random() < (1 - dEuclidiana/(Prob*size_window_x))
+     ''' Takes value of Prob (0 < Prob < 1)
+          return a set of roads to connect the villages, the smaller euclidian distance between villages
+           the greater the probability of having a road '''
         import random as rd
         point_dic_X = self.Villages.copy()
         point_dic_X.sort(key=lambda d: d['PosX'])
@@ -131,11 +134,8 @@ class MapCity:
         names_villages =  list(map(lambda item: item['Name'], self.Villages))
         
         if PointName in names_villages:
-
             P_conections =  list(filter(lambda item: item['Names'][0] == PointName or item['Names'][1] == PointName, self.Roads))
-
             citiesArrivals = []
-
             for conection in P_conections:
                 for k in range(2):
                     if conection['Names'][k] != PointName:
@@ -145,6 +145,20 @@ class MapCity:
 
         else:
             return f"Village {PointName} does not exist in the map"
+
+    def find_Conections_to_Village_costs(self, PointName):
+        P_conections =  list(filter(lambda item: item['Names'][0] == PointName or item['Names'][1] == PointName, self.Roads))
+
+        citiesArrivals = []
+        costs = []
+        for conection in P_conections:
+            for k in range(2):
+                if conection['Names'][k] != PointName:
+                    citiesArrivals.append(conection['Names'][k])
+            costs.append(conection['Dist'])
+
+        return citiesArrivals, costs
+
 
     def get_dataframe_roads(self):
         import pandas as pd
@@ -173,9 +187,16 @@ class search_Paths:
         self.algorithm = algorithm
         self.solution = self.algorithm_selection()
 
+
     def algorithm_selection(self):
         if self.algorithm == ('Wide' or 'wide'):
             return self.solutionPaths_wide()
+        elif self.algorithm == ('Deep' or 'deep'):
+            return self.solutionPaths_deep()
+        elif self.algorithm == ('Uniform' or 'uniform'):
+            return self.solutionPaths_Uniform()
+        else:
+            print('This algorithm is not content in this library, try another')
 
     def totalCostPath(self, path_solution):
         total_dist = 0
@@ -209,6 +230,19 @@ class search_Paths:
 
         return  curr_nodo
 
+    def createTree_Cost(self, curr_nodo):                             # Recibe un nodo y lo extiende con sus posibles acciones
+
+        childsNames, costs = self.Map.find_Conections_to_Village_costs(curr_nodo.Name)
+
+        for i, cN in enumerate(childsNames):
+            aux_Node = Nodo(cN)
+            aux_Node.actions = curr_nodo.actions + [cN]
+            aux_Node.cost = curr_nodo.cost + costs[i]
+            curr_nodo.childs.append(aux_Node)
+
+        return  curr_nodo
+
+
     def solutionPaths_wide(self):
 
         cityNode = Nodo(self.Initial_Village)                 # inicializar la pila de nodos a evaluar
@@ -240,9 +274,67 @@ class search_Paths:
 
     def show_solution(self):
         print(self.solution)
+    
+    def solutionPaths_deep(self):
 
+        cityNode = Nodo(self.Initial_Village)                 # inicializar la pila de nodos a evaluar
+        list_node = [cityNode]                       # Inicializar lista de estado evaluados
+        evaluated_states = []
+        result = None
 
+        while True:
+            if len(list_node)==0:                           # Verificar si la lista está vacía entonces no hay solución
+                break
 
+            curr_node = list_node.pop()                 # Saca el primer elemento de la lista
+            if curr_node.Name in evaluated_states:            # Si el elemento ya fue evaludado continúa con el que sigue
+                  continue
+
+            if self.checkSolution(curr_node):     # Evaluar el estado   preguntando si ya es la solucion
+                  result = curr_node.actions
+                  break
+
+            evaluated_states.append(curr_node.Name)            # Agrega el nodo a la lista de evaluados
+            curr_node = self.createTree(curr_node)           # expande el nodo
+            for child in curr_node.childs:
+                list_node.append(child)
+        print(f'Have been evaluated {len(evaluated_states)} states')
+        return result
+
+    def solutionPaths_Uniform(self):
+
+        cityNode = Nodo(self.Initial_Village)                 # inicializar la pila de nodos a evaluar
+        list_node = [cityNode]                       # Inicializar lista de estado evaluados
+        evaluated_states = []
+        result = None
+
+        while True:
+            if len(list_node)==0:                           # Verificar si la lista está vacía entonces no hay solución
+                break
+
+            curr_node = list_node.pop(0)                 # Saca el primer elemento de la lista
+
+            if curr_node.Name in evaluated_states:            # Si el elemento ya fue evaludado continúa con el que sigue
+                  continue
+            if self.checkSolution(curr_node):     # Evaluar el estado   preguntando si ya es la solucion
+                  result = curr_node.actions
+                  break
+
+            evaluated_states.append(curr_node.Name)            # Agrega el nodo a la lista de evaluados
+            curr_node = self.createTree_Cost(curr_node)           # expande el nodo
+            for child in curr_node.childs:
+                if list_node == [] or list_node[len(list_node)-1].cost < child.cost:
+                          list_node.append(child)
+                else:
+                      for k in range(len(list_node)):
+                            if list_node[k].cost >= child.cost:
+                                  list_node.insert(k, child)
+                                  break
+
+        print(f'Have been evaluated {len(evaluated_states)} states')
+        return result
+
+        
 
 
 

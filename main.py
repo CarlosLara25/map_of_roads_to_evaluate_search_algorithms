@@ -10,7 +10,8 @@ Guanajuato.create_roads(0.9)             # Generate a number random a number of 
 Guanajuato.show_Map_roads()              # Show the map with the roads generated, are shown in stright line but they are not
 print(Guanajuato.get_dataframe_roads())        # get the dataframe of the roads created
 
-
-Solution = search_Paths(Guanajuato,'B0','D0')   # get the path to go from D0 to B0 using the by default 'Wide' algorithm
+#Solution = search_Paths(Guanajuato,'B0','D0')   # get the path to go from D0 to B0 using the by default 'Wide' algorithm
+Solution = search_Paths(Guanajuato,'B0','D0','Deep')   # get the path to go from D0 to B0 using the 'Deep' algorithm
+#Solution = search_Paths(Guanajuato,'B0','D0','Uniform')   # get the path to go from D0 to B0 using the 'Uniform' algorithm
 Solution.show_solution()
 
