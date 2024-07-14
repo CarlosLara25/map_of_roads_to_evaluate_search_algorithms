@@ -1,12 +1,13 @@
-Programa para construir mapa de ciudades
+Programa para construir mapa de ciudades con N numero de pueblos ditribuidos en la ciudad
 
-En un escenario de 2000*2000
-Generear N Puntos(Ciudades) y asignarles un nombre "Desde A0 hasta Z0" Después A1 si es necesario, y asi sucesivamente
+Con el objetivo de crear caminos entre los pueblos y con ello poder aplicar algoritmos de busqueda de trayectoria
 
-Crear las distancias euclidianas entre cada uno y crear una distancia de carretera entre ellas sumandoles un valor aleatorio (10 a 250).
+En un escenario de 2000*2000 (configurable)
+Generear N Puntos(Villages) y asignarles un nombre "Desde A0 hasta Z0" Después A1 si es necesario, y asi sucesivamente
 
-Dibujarlas con un circulo cenrada en su posición y su nombre adentro
+Crear las distancias euclidianas entre cada uno y crear una distancia de carretera entre ellas sumandoles al valor de la distancia recta un valor aleatorio (10 a 250).
 
-De ejercicio gráfico se generará una de seed(3) de 12 points
+Dibujarlas con un circulo centrada en su posición y su nombre adentro
 
-Se genará una seed(1) para 50 points 
+Una vez concluido el mapa, pueden llamrase algoritmos de busqueda para encontrar trayectorias entre dos pueblos 
+Hasta ahora se han agregado los algoritmos: Busqueda por amplitud 'Wide', busqueda por profundidad 'Deep' y busqueda uniforme 'Uniform'
