@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 
 class MapCity:
     def __init__(self,numPoints, seed=1, size_Window_Y=2000,size_Window_X=2000,size_Name=20):
+        ''' Takes the arguments numPoints, seed=1, size_Window_Y=2000,size_Window_X=2000,size_Name=20
+           And return and instance with numPoint Villages randomly (seed) into the map''' 
+
         self.numPoints = numPoints
         self.seed = seed
         self.size_Window_Y = size_Window_Y
