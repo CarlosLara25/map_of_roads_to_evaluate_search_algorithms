@@ -72,10 +72,12 @@ class MapCity:
 
     def create_roads(self, Prob):  # probability of road between two villages is in funtion of the distance
      # being accepted if rd.random() < (1 - dEuclidiana/(Prob*size_window_x))
-     ''' Takes value of Prob (0 < Prob < 1)
-          return a set of roads to connect the villages, the smaller euclidian distance between villages
-           the greater the probability of having a road '''
+        ''' Takes value of Prob (0 < Prob < 1)
+            return a set of roads to connect the villages, the smaller euclidian distance between villages
+            the greater the probability of having a road '''
+
         import random as rd
+        rd.seed(self.seed)
         point_dic_X = self.Villages.copy()
         point_dic_X.sort(key=lambda d: d['PosX'])
         Paths = [] 
@@ -163,8 +165,8 @@ class MapCity:
     def get_dataframe_roads(self):
         import pandas as pd
 
-        df_roads = pd.DataFrame([key['Names'][0]    for key in self.Roads], columns=['City depture'])
-        df_roads['City arrival'] = [key['Names'][1]    for key in self.Roads]
+        df_roads = pd.DataFrame([key['Names'][0]    for key in self.Roads], columns=['Village depture'])
+        df_roads['Village arrival'] = [key['Names'][1]    for key in self.Roads]
         df_roads['Distance'] = [key['Dist']    for key in self.Roads]
 
         return df_roads
@@ -179,10 +181,10 @@ class Nodo:
         self.cost_Astar = 0
 
 class search_Paths:
-    def __init__(self, Map,  goal_Village, Initial_Village = 'A0', algorithm = 'Wide'):
+    def __init__(self, Map,  goal_Village, initial_Village = 'A0', algorithm = 'Wide'):
         self.Map = Map
         self.Roads = Map.Roads
-        self.Initial_Village = Initial_Village
+        self.initial_Village = initial_Village
         self.goal_Village = goal_Village
         self.algorithm = algorithm
         self.solution = self.algorithm_selection()
@@ -195,23 +197,31 @@ class search_Paths:
             return self.solutionPaths_deep()
         elif self.algorithm == ('Uniform' or 'uniform'):
             return self.solutionPaths_Uniform()
+        elif self.algorithm == ('Greedy' or 'greedy'):
+            return self.solutionPaths_Greedy()
+        elif self.algorithm == ('Astar'):
+            return self.solutionPaths_Astar()
         else:
             print('This algorithm is not content in this library, try another')
 
-    def totalCostPath(self, path_solution):
-        total_dist = 0
-
-        if len(path_solution) != None:
-            aux_path =  list(filter(lambda item: item['Names'] == [self.goal_Village, path_solution[0]] or item['Names'] == [path_solution[0], self.goal_Village], self.Roads))
-            total_dist += aux_path[0]['Dist']
-
-            for i in range(len(path_solution) - 1):
-                aux_path =  list(filter(lambda item: item['Names'] == [path_solution[i], path_solution[i+1]] or item['Names'] == [path_solution[i+1], path_solution[i]], self.Roads))
+    def totalCostPath(self):
+        if self.solution == None:
+            print('Still there is not a solution')
+        else:
+            total_dist = 0
+            path_solution = self.solution
+         
+            if len(path_solution) != None:
+                aux_path =  list(filter(lambda item: item['Names'] == [self.initial_Village, path_solution[0]] or item['Names'] == [path_solution[0], self.initial_Village], self.Roads))
                 total_dist += aux_path[0]['Dist']
 
-            return total_dist
+                for i in range(len(path_solution) - 1):
+                    aux_path =  list(filter(lambda item: item['Names'] == [path_solution[i], path_solution[i+1]] or item['Names'] == [path_solution[i+1], path_solution[i]], self.Roads))
+                    total_dist += aux_path[0]['Dist']
 
-        return 0
+                return total_dist
+
+            return 0
 
     def checkSolution(self, PointName):
         if PointName.Name == self.goal_Village:
@@ -245,7 +255,7 @@ class search_Paths:
 
     def solutionPaths_wide(self):
 
-        cityNode = Nodo(self.Initial_Village)                 # inicializar la pila de nodos a evaluar
+        cityNode = Nodo(self.initial_Village)                 # inicializar la pila de nodos a evaluar
         list_node = [cityNode]                       # Inicializar lista de estado evaluados
         evaluated_states = []
         result = None
@@ -269,15 +279,24 @@ class search_Paths:
             curr_node = self.createTree(curr_node)           # expande el nodo
             for child in curr_node.childs:
                 list_node.append(child)
-        print(f'Have been evaluated {len(evaluated_states)} states')
         return result
 
     def show_solution(self):
-        print(self.solution)
+        print(f'With the algorithm {self.algorithm}')
+        print(f'The solution is:')
+        Sol = self.initial_Village
+        for Village in self.solution: 
+            Sol += " -> "
+            Sol += Village
+        
+        print(Sol)
+        print(f'Total cost is: {self.totalCostPath()}')
+        
+
     
     def solutionPaths_deep(self):
 
-        cityNode = Nodo(self.Initial_Village)                 # inicializar la pila de nodos a evaluar
+        cityNode = Nodo(self.initial_Village)                 # inicializar la pila de nodos a evaluar
         list_node = [cityNode]                       # Inicializar lista de estado evaluados
         evaluated_states = []
         result = None
@@ -298,12 +317,11 @@ class search_Paths:
             curr_node = self.createTree(curr_node)           # expande el nodo
             for child in curr_node.childs:
                 list_node.append(child)
-        print(f'Have been evaluated {len(evaluated_states)} states')
         return result
 
     def solutionPaths_Uniform(self):
 
-        cityNode = Nodo(self.Initial_Village)                 # inicializar la pila de nodos a evaluar
+        cityNode = Nodo(self.initial_Village)                 # inicializar la pila de nodos a evaluar
         list_node = [cityNode]                       # Inicializar lista de estado evaluados
         evaluated_states = []
         result = None
@@ -331,7 +349,103 @@ class search_Paths:
                                   list_node.insert(k, child)
                                   break
 
-        print(f'Have been evaluated {len(evaluated_states)} states')
+        return result
+
+    def getPositionOfCity(self, nameCity):
+        informationCity =  list(filter(lambda item: item['Name'] == nameCity, self.Map.Villages))
+
+        return informationCity[0]['PosY'] , informationCity[0]['PosX']
+
+    def createTreeCost_Greedy(self, curr_nodo, pos_Solution):                             # Recibe un nodo y lo extiende con sus posibles acciones
+
+        childsNames, costs = self.Map.find_Conections_to_Village_costs(curr_nodo.Name)
+
+        for i, cN in enumerate(childsNames):
+            aux_Node = Nodo(cN)
+            aux_Node.actions = curr_nodo.actions + [cN]
+            positionChild = self.getPositionOfCity(cN)
+            aux_Node.cost_Astar = self.Map.euclidianDist2D(positionChild[0], pos_Solution[0],positionChild[1], pos_Solution[1])  # Agregar la parte + cost[i] convierte de greedy a A*
+            curr_nodo.childs.append(aux_Node)
+
+        return  curr_nodo
+
+    def createTreeCost_Astar(self, curr_nodo, pos_Solution):                             # Recibe un nodo y lo extiende con sus posibles acciones
+
+        childsNames, costs = self.Map.find_Conections_to_Village_costs(curr_nodo.Name)
+
+        for i, cN in enumerate(childsNames):
+            aux_Node = Nodo(cN)
+            aux_Node.actions = curr_nodo.actions + [cN]
+            positionChild = self.getPositionOfCity(cN)
+            aux_Node.cost = curr_nodo.cost + costs[i]
+            aux_Node.cost_Astar = self.Map.euclidianDist2D(positionChild[0], pos_Solution[0],positionChild[1], pos_Solution[1])  + aux_Node.cost # Agregar la parte + cost[i] convierte de greedy a A*
+            curr_nodo.childs.append(aux_Node)
+
+        return  curr_nodo
+
+    def solutionPaths_Greedy(self):
+        cityNode = Nodo(self.initial_Village)                 # inicializar la pila de nodos a evaluar
+        list_node = [cityNode]                       # Inicializar lista de estado evaluados
+        evaluated_states = []
+        position_solutionCity = self.getPositionOfCity(self.goal_Village)
+        result = None
+
+        while True:
+            if len(list_node)==0:                           # Verificar si la lista está vacía entonces no hay solución
+                break
+            curr_node = list_node.pop(0)                 # Saca el primer elemento de la lista
+            if curr_node.Name in evaluated_states:            # Si el elemento ya fue evaludado continúa con el que sigue
+                  continue
+            if self.checkSolution(curr_node):     # Evaluar el estado   preguntando si ya es la solucion
+                  result = curr_node.actions
+                  break
+
+            evaluated_states.append(curr_node.Name)            # Agrega el nodo a la lista de evaluados
+
+            curr_node = self.createTreeCost_Greedy(curr_node,position_solutionCity)           # expande el nodo
+            for child in curr_node.childs:
+                #  print(f'la distancia entre el nodo {child.Name} con position {getPositionOfCity(PointDictionary,child.Name)} y el nodo solucion {solutionCity} es de {child.cost}')
+                  if list_node == [] or list_node[len(list_node)-1].cost_Astar < child.cost_Astar:
+                          list_node.append(child)
+                  else:
+                      for k in range(len(list_node)):
+                            if list_node[k].cost_Astar >= child.cost_Astar:
+                                  list_node.insert(k, child)
+                                  break
+
+        return result
+
+    def solutionPaths_Astar(self):
+
+        cityNode = Nodo(self.initial_Village)                 # inicializar la pila de nodos a evaluar
+        list_node = [cityNode]                       # Inicializar lista de estado evaluados
+        evaluated_states = []
+        position_solutionCity = self.getPositionOfCity(self.goal_Village)
+        result = None
+
+        while True:
+            if len(list_node)==0:                           # Verificar si la lista está vacía entonces no hay solución
+                break
+            curr_node = list_node.pop(0)                 # Saca el primer elemento de la lista
+            if curr_node.Name in evaluated_states:            # Si el elemento ya fue evaludado continúa con el que sigue
+                  continue
+            if self.checkSolution(curr_node):     # Evaluar el estado   preguntando si ya es la solucion
+                  result = curr_node.actions
+                  break
+
+            evaluated_states.append(curr_node.Name)            # Agrega el nodo a la lista de evaluados
+
+            curr_node = self.createTreeCost_Astar(curr_node, position_solutionCity)           # expande el nodo
+            for child in curr_node.childs:
+                #  print(f'la distancia entre el nodo {child.Name} con position {getPositionOfCity(PointDictionary,child.Name)} y el nodo solucion {solutionCity} es de {child.cost}')
+                  if list_node == [] or list_node[len(list_node)-1].cost_Astar < child.cost_Astar:
+                          list_node.append(child)
+                  else:
+                      for k in range(len(list_node)):
+                            if list_node[k].cost_Astar >= child.cost_Astar:
+                                  list_node.insert(k, child)
+                                  break
+
         return result
 
         
